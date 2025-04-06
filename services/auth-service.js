@@ -272,6 +272,30 @@ const forgotPassword = async (email) =>{
   }
 }
 
+const me = async (userId) => {
+try {
+  const user = await User.findById(userId).select("-password -refreshTokens");
+
+  if (!user) {
+    return {
+      status: false,
+      message: "User not found",
+    };
+  }
+
+  return {
+    status: true,
+    data: user,
+    message: "User information retrieved successfully",
+  };
+} catch (error) {
+  return {
+    status: false,
+    message: error.message,
+  }
+}
+}
+
 const logout = async (userId, refreshToken) => {
   try {
     // Verify refresh token to get the token ID
@@ -319,6 +343,7 @@ module.exports = {
   login,
   refreshToken,
   forgotPassword,
+  me,
   logout,
   logoutAll,
 };

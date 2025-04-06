@@ -1,8 +1,6 @@
 module.exports = Object.freeze({
   exitUrl: [
-    "/api/qoutation/create-estimate",
-    "/api/qoutation/get-estimate",
-    "/api/qoutation/get-estimate",
+  "/api/auth/me",
   ],
   passUrl: [
     "/api/auth/login",
@@ -15,5 +13,6 @@ module.exports = Object.freeze({
     "/api/auth/refresh-token",
     "/api/auth/google/signin",
     "/api/auth/forgot-password",
+    
   ],
 });
