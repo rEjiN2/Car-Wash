@@ -155,6 +155,30 @@ const verifyResetPassword = async (req, res) => {
   }
 };
 
+const me = async (req, res) => {
+  try {
+    const result = await authService.me(req.user._id);
+
+    if (result.status) {
+      return res.status(200).json({
+        status: true,
+        message: "User information retrieved successfully",
+        data: result.data,
+      });
+    }
+
+    return res.status(400).json({
+      status: false,
+      message: result.message,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+}
+
 const logout = async (req, res) => {
   try {
     const refreshToken = req.cookies.refreshToken;
@@ -210,6 +234,7 @@ module.exports = {
   refreshAccessToken,
   forgotPassword,
   verifyResetPassword,
+  me,
   logout,
   logoutAll,
 };
