@@ -54,6 +54,16 @@ const UserSchema = new mongoose.Schema(
         // Storing token IDs for validation and revocation
       },
     ],
+    phoneNumber: {
+      type: String,
+      required: true,
+      validate: {
+        validator: function (v) {
+          return /^\+?\d{9,15}$/.test(v);
+        },
+        message: (props) => `${props.value} is not a valid phone number!`,
+      },
+    },
     role: {
       type: String,
       enum: ["user", "admin"],

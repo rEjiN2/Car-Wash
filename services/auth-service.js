@@ -8,7 +8,6 @@ const {
 } = require("../utils/validation");
 const { sendOTPEmail, sendOTPSMS } = require("./otp-service");
 
-
 // Generate access token
 const generateAccessToken = (userId) => {
   return jwt.sign(
@@ -36,7 +35,7 @@ const generateRefreshToken = (userId) => {
 const register = async (data) => {
   // Sanitize input data
   const sanitizedData = sanitizeObject(data);
-  const { username, email, password } = data;
+  const { username, email, password, phoneNumber } = data;
   try {
     // Additional validation
     if (!username || !email || !password) {
@@ -77,6 +76,7 @@ const register = async (data) => {
       username,
       email,
       password,
+      phoneNumber,
       refreshTokens: [], // Array to store active refresh token IDs
     });
 
@@ -142,7 +142,7 @@ const login = async (data) => {
     if (!isMatch) {
       return {
         status: false,
-        message: "Invalid credentials",
+        message: "Invalid Password",
       };
     }
 
@@ -221,47 +221,46 @@ const refreshToken = async (refreshToken) => {
   }
 };
 
-const forgotPassword = async (email) =>{
+const forgotPassword = async (email) => {
   try {
     // 1. Find user by email
     const user = await User.findOne({ email });
-    
+
     if (!user) {
       return {
         status: false,
         message: "User not found with this email",
       };
     }
-    
+
     // 2. Generate OTP (6-digit number)
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    console.log(otp ,  "otp")
     // 3. Save OTP to user record with expiration time (10 minutes)
     user.resetPasswordOTP = otp;
     user.resetPasswordOTPExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
-    
 
     // 4. Send OTP via email
     const emailSent = await sendOTPEmail(user.email, otp);
-    
+
     // 5. Send OTP via SMS
-     const smsSent = await sendOTPSMS(user.phoneNumber, otp);
-    
-    if (!emailSent 
-    //   && 
-    //   !smsSent
-     ) {
+    const smsSent = await sendOTPSMS(user.phoneNumber, otp);
+
+    if (
+      !emailSent
+      //   &&
+      //   !smsSent
+    ) {
       return {
         status: false,
         message: "Failed to send OTP. Please try again.",
       };
     }
-    
+
     return {
       status: true,
       message: "OTP sent successfully",
-      userId: user._id
+      userId: user._id,
     };
   } catch (error) {
     console.error("Forgot password service error:", error);
@@ -270,7 +269,7 @@ const forgotPassword = async (email) =>{
       message: "An error occurred while processing your request",
     };
   }
-}
+};
 
 const logout = async (userId, refreshToken) => {
   try {

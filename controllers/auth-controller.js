@@ -1,4 +1,4 @@
-const { authService } = require("../services");
+const { authService, otpService } = require("../services");
 
 const register = async (req, res) => {
   const { body } = req;
@@ -100,7 +100,7 @@ const refreshAccessToken = async (req, res) => {
   }
 };
 
-const forgotPassword = async (req, res)=>{
+const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -130,7 +130,30 @@ const forgotPassword = async (req, res)=>{
       message: error.message,
     });
   }
-}
+};
+
+const verifyResetPassword = async (req, res) => {
+  const { body } = req;
+  try {
+    const reset = await otpService.verifyOTPAndResetPassword(body);
+    if (!reset.status) {
+      return res.status(400).json({
+        status: false,
+        message: reset.message,
+      });
+    }
+    return res.status(200).json({
+      status: true,
+      message: reset.message,
+    });
+  } catch (error) {
+    console.error("Verify OTP error:", error);
+    return res.status(500).json({
+      status: false,
+      message: "An error occurred while resetting your password",
+    });
+  }
+};
 
 const logout = async (req, res) => {
   try {
@@ -186,6 +209,7 @@ module.exports = {
   login,
   refreshAccessToken,
   forgotPassword,
+  verifyResetPassword,
   logout,
   logoutAll,
 };

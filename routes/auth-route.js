@@ -26,7 +26,9 @@ router.post(
   validateRequest,
   authController.refreshAccessToken
 );
-router.post("/forgot-password", authController.forgotPassword)
+
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/verify-reset-password", authController.verifyResetPassword);
 router.get("/logout", authMiddleware, authController.logout);
 router.get("/logout-all", authMiddleware, authController.logoutAll);
 

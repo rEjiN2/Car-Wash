@@ -15,5 +15,6 @@ module.exports = Object.freeze({
     "/api/auth/refresh-token",
     "/api/auth/google/signin",
     "/api/auth/forgot-password",
+    "/api/auth/verify-reset-password",
   ],
 });
