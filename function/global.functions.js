@@ -8,13 +8,12 @@ const sharp = require("sharp");
 const Papa = require("papaparse");
 const XLSX = require("xlsx");
 const ExcelJS = require("exceljs");
-const AWS = require("aws-sdk");
 const speakeasy = require("speakeasy");
 const qrcode = require("qrcode");
-const config = require("../config");
-const logger = require("../config/logger");
-const rateLimit = require("express-rate-limit");
-const { promisify } = require("util");
+// const config = require("../config");
+// const logger = require("../config/logger");
+// const rateLimit = require("express-rate-limit");
+ const { promisify } = require("util");
 const {
   add,
   sub,
@@ -27,13 +26,9 @@ const {
   subHours,
 } = require("date-fns");
 
-AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESSKEYID,
-  secretAccessKey: process.env.AWS_SECRETACCESSKEY,
-});
 
-const aws_bucket = process.env.AWS_BUCKET;
-const s3 = new AWS.S3();
+
+
 
 const isNumberLessThanZero = (number) => number < 0;
 const makeAbsoluteNumber = (number) => Math.abs(number);
@@ -67,21 +62,6 @@ const getTwoPercentVat = (amount) => {
   return roundToDecimal(vat, 2);
 };
 
-const getAmountWithVat = (totalAmount, vatRate = config.defaultVat) => {
-  if (totalAmount <= 0 || vatRate <= 0)
-    return {
-      amount: 0,
-      vat: 0,
-    };
-
-  const amount = totalAmount / (1 + vatRate / 100);
-  const vat = totalAmount - amount;
-
-  return {
-    amount,
-    vat,
-  };
-};
 
 const combineObjects = (data) => {
   return data.reduce((combinedObject, currentObject) => {
@@ -278,44 +258,44 @@ const createDirectory = (dir) => {
   }
 };
 
-const resizeImage = async (imagePath, outputDir) => {
-  try {
-    if (!checkRequiredArguments(imagePath, outputDir)) return;
-    createDirectory(outputDir);
+// const resizeImage = async (imagePath, outputDir) => {
+//   try {
+//     if (!checkRequiredArguments(imagePath, outputDir)) return;
+//     createDirectory(outputDir);
 
-    const { imageResizeDimensions: dimensions } = config;
-    const image = sharp(imagePath);
+//     const { imageResizeDimensions: dimensions } = config;
+//     const image = sharp(imagePath);
 
-    const resizedImagePaths = [];
+//     const resizedImagePaths = [];
 
-    for (const dimension of dimensions) {
-      const { name, width, height } = dimension;
-      const outputFilename = `${name}-${path.basename(imagePath)}`;
-      const outputPath = path.join(outputDir, outputFilename);
-      const options = {
-        fit: "inside",
-        withoutEnlargement: true,
-      };
+//     for (const dimension of dimensions) {
+//       const { name, width, height } = dimension;
+//       const outputFilename = `${name}-${path.basename(imagePath)}`;
+//       const outputPath = path.join(outputDir, outputFilename);
+//       const options = {
+//         fit: "inside",
+//         withoutEnlargement: true,
+//       };
 
-      try {
-        await image.resize(width, height, options).toFile(outputPath);
+//       try {
+//         await image.resize(width, height, options).toFile(outputPath);
 
-        resizedImagePaths.push({
-          path: outputPath,
-          size: name,
-        });
-      } catch (err) {
-        _error(`Error resizing image to ${width}x${height}: ${err.message}`);
-      }
-    }
+//         resizedImagePaths.push({
+//           path: outputPath,
+//           size: name,
+//         });
+//       } catch (err) {
+//         _error(`Error resizing image to ${width}x${height}: ${err.message}`);
+//       }
+//     }
 
-    removeFileByPath(imagePath);
-    return resizedImagePaths;
-  } catch (err) {
-    _error(`Error resizing image: ${err.message}`);
-    return [];
-  }
-};
+//     removeFileByPath(imagePath);
+//     return resizedImagePaths;
+//   } catch (err) {
+//     _error(`Error resizing image: ${err.message}`);
+//     return [];
+//   }
+// };
 
 const getSapOriginalAmount = (finalAmount, chargePercentage) => {
   const percentageMultiplier = 1 + chargePercentage / 100;
@@ -371,19 +351,19 @@ const customSlice = (str, type, count) => {
   }
 };
 
-const detectDateFormat = (date) => {
-  const dateFormats = Object.values(config.dateFormats);
+// const detectDateFormat = (date) => {
+//   const dateFormats = Object.values(config.dateFormats);
 
-  for (const format of dateFormats) {
-    const parsedDate = parse(date, format, new Date());
+//   for (const format of dateFormats) {
+//     const parsedDate = parse(date, format, new Date());
 
-    if (!isNaN(parsedDate)) {
-      return format;
-    }
-  }
+//     if (!isNaN(parsedDate)) {
+//       return format;
+//     }
+//   }
 
-  return config.dateFormats.ISO8601;
-};
+//   return config.dateFormats.ISO8601;
+// };
 
 const convertDateFormat = (date, sourceFormat, targetFormat) => {
   const parsedDate = parse(date, sourceFormat, new Date());
@@ -396,13 +376,13 @@ const convertDateFormat = (date, sourceFormat, targetFormat) => {
   return formattedDate;
 };
 
-const formatDate = (date, formate = config.dateFormats.ISO8601) => {
-  if (!date) return;
+// const formatDate = (date, formate = config.dateFormats.ISO8601) => {
+//   if (!date) return;
 
-  const parsedDate = typeof date === "string" ? parseISO(date) : date;
-  if (isNaN(parsedDate)) return "Invalid date!";
-  return format(parsedDate, formate);
-};
+//   const parsedDate = typeof date === "string" ? parseISO(date) : date;
+//   if (isNaN(parsedDate)) return "Invalid date!";
+//   return format(parsedDate, formate);
+// };
 
 const daysPassedFromToday = (targetDate) => {
   if (!targetDate) return;
@@ -412,33 +392,33 @@ const daysPassedFromToday = (targetDate) => {
   return daysPassed;
 };
 
-const manipulateDate = (
-  date,
-  operation,
-  value,
-  formate = config.dateFormats.ISO8601
-) => {
-  const parsedDate = typeof date === "string" ? parseISO(date) : date;
+// const manipulateDate = (
+//   date,
+//   operation,
+//   value,
+//   formate = config.dateFormats.ISO8601
+// ) => {
+//   const parsedDate = typeof date === "string" ? parseISO(date) : date;
 
-  if (isNaN(parsedDate)) return "Invalid date!";
+//   if (isNaN(parsedDate)) return "Invalid date!";
 
-  let manipulatedDate;
-  if (operation === "add") {
-    manipulatedDate = add(parsedDate, { days: value });
-  } else if (operation === "subtract") {
-    manipulatedDate = sub(parsedDate, { days: value });
-  } else {
-    return 'Invalid operation. Use "add" or "subtract"';
-  }
+//   let manipulatedDate;
+//   if (operation === "add") {
+//     manipulatedDate = add(parsedDate, { days: value });
+//   } else if (operation === "subtract") {
+//     manipulatedDate = sub(parsedDate, { days: value });
+//   } else {
+//     return 'Invalid operation. Use "add" or "subtract"';
+//   }
 
-  return format(manipulatedDate, formate);
-};
+//   return format(manipulatedDate, formate);
+// };
 
-const todayDate = (formate = config.dateFormats.ISO8601) => {
-  const date = new Date();
-  const formattedDate = format(date, formate);
-  return formattedDate;
-};
+// const todayDate = (formate = config.dateFormats.ISO8601) => {
+//   const date = new Date();
+//   const formattedDate = format(date, formate);
+//   return formattedDate;
+// };
 
 const uniqueItemsToArray = (...args) => {
   return Array.from(new Set(args)).filter(Boolean);
@@ -499,13 +479,13 @@ const isValidEmail = (email) => {
   return regex.test(email);
 };
 
-const isEmailDomainAllowed = (email) => {
-  if (!email) return false;
-  for (const domain of config.restrictedEmailDomains) {
-    if (email.toLowerCase().endsWith(domain)) return false;
-  }
-  return true;
-};
+// const isEmailDomainAllowed = (email) => {
+//   if (!email) return false;
+//   for (const domain of config.restrictedEmailDomains) {
+//     if (email.toLowerCase().endsWith(domain)) return false;
+//   }
+//   return true;
+// };
 
 const removeSpecialCharacters = (str) => {
   if (!checkRequiredArguments(str)) return;
@@ -743,7 +723,7 @@ const getFileSize = (filePath, conversionUnit = "MB") => {
       readable: readableSize,
     };
   } catch (error) {
-    logger.error(`Error getting file size: ${error}`);
+    // logger.error(`Error getting file size: ${error}`);
   }
 };
 
@@ -768,8 +748,8 @@ const convertXlsxToCsv = (inputPath, outputPath) => {
   const sheetName = workbook.SheetNames[0];
   const csvData = XLSX.utils.sheet_to_csv(workbook.Sheets[sheetName]);
   fs.writeFileSync(outputPath, csvData);
-
-  logger.info(`XLSX converted to CSV and saved to ${outputPath}`);
+   console.log(`XLSX converted to CSV and saved to ${outputPath}`);
+  // logger.info(`XLSX converted to CSV and saved to ${outputPath}`);
 };
 
 const getTodayAndTomorrowDate = () => {
@@ -991,7 +971,7 @@ const commonAwsFileUploader = async (files) => {
         type: fileType,
       });
     } catch (error) {
-      logger.error(`Error uploading ${fileName}: ${error.message}`);
+      // logger.error(`Error uploading ${fileName}: ${error.message}`);
       uploadResults.push({
         fileName,
         error: error.message,
@@ -1098,12 +1078,12 @@ const safeUnlinkAsync = async (filePath) => {
   try {
     await accessAsync(filePath);
     await unlinkAsync(filePath);
-    logger.info(`File successfully removed: ${filePath}`);
+    // logger.info(`File successfully removed: ${filePath}`);
   } catch (err) {
     if (err.code === "ENOENT") {
-      logger.warn(`File does not exist or already removed: ${filePath}`);
+      // logger.warn(`File does not exist or already removed: ${filePath}`);
     } else {
-      logger.error(`Error during file removal: ${filePath}`, err.message);
+      // logger.error(`Error during file removal: ${filePath}`, err.message);
     }
   }
 };
@@ -1180,41 +1160,41 @@ const formatDateForUserUpdate = (dateValue) => {
 };
 // Helper function to normalize values for comparison
 // Helper function to normalize values for comparison
-function normalizeValue(value, fieldName) {
-  if (config.fieldTypes.dateFields.includes(fieldName) && isValidDate(value)) {
-    return formatDate(value);
-  }
+// function normalizeValue(value, fieldName) {
+//   if (config.fieldTypes.dateFields.includes(fieldName) && isValidDate(value)) {
+//     return formatDate(value);
+//   }
 
-  if (config.fieldTypes.numericFields.includes(fieldName)) {
-    return Number(value);
-  }
+//   if (config.fieldTypes.numericFields.includes(fieldName)) {
+//     return Number(value);
+//   }
 
-  if (config.fieldTypes.booleanFields.includes(fieldName)) {
-    // Handle string representations of booleans
-    if (typeof value === "string") {
-      return value.toLowerCase() === "true";
-    }
-    return Boolean(value);
-  }
+//   if (config.fieldTypes.booleanFields.includes(fieldName)) {
+//     // Handle string representations of booleans
+//     if (typeof value === "string") {
+//       return value.toLowerCase() === "true";
+//     }
+//     return Boolean(value);
+//   }
 
-  return value;
-}
+//   return value;
+// }
 // Helper function to format value for display
-const formatValueForDisplay = (value, fieldName) => {
-  const numericFields = ["userType", "status"];
-  if (config.fieldTypes.dateFields.includes(fieldName)) {
-    if (isValidDate(value)) {
-      return formatDateForUserUpdate(value);
-    }
-  }
-  if (config.fieldTypes.booleanFields.includes(fieldName)) {
-    return value;
-  }
-  if (config.fieldTypes.numericFields.includes(fieldName)) {
-    return String(value);
-  }
-  return value;
-};
+// const formatValueForDisplay = (value, fieldName) => {
+//   const numericFields = ["userType", "status"];
+//   if (config.fieldTypes.dateFields.includes(fieldName)) {
+//     if (isValidDate(value)) {
+//       return formatDateForUserUpdate(value);
+//     }
+//   }
+//   if (config.fieldTypes.booleanFields.includes(fieldName)) {
+//     return value;
+//   }
+//   if (config.fieldTypes.numericFields.includes(fieldName)) {
+//     return String(value);
+//   }
+//   return value;
+// };
 const getTimeInMs = (value, unit) => {
   const units = {
     minute: 60000,
@@ -1223,7 +1203,7 @@ const getTimeInMs = (value, unit) => {
   };
 
   if (!units[unit]) {
-    logger.error(`Invalid unit: ${unit}`);
+    // logger.error(`Invalid unit: ${unit}`);
     return null;
   }
 
@@ -1234,7 +1214,7 @@ const parseJsonIfPossible = (data) => {
     try {
       data = JSON.parse(data);
     } catch (error) {
-      logger.error(`Invalid JSON string while parsing: ${error}`);
+      // logger.error(`Invalid JSON string while parsing: ${error}`);
     }
   }
   return data;
@@ -1259,7 +1239,7 @@ module.exports = {
   joinWithSymbol,
   checkRequiredArguments,
   createDirectory,
-  resizeImage,
+  // resizeImage,
   getValuesByKey,
   sendDummyResponse,
   regexSearch,
@@ -1274,20 +1254,20 @@ module.exports = {
   roundToDecimal,
   ceilToDecimal,
   customSlice,
-  detectDateFormat,
+  // detectDateFormat,
   convertDateFormat,
-  formatDate,
+  // formatDate,
   daysPassedFromToday,
-  manipulateDate,
-  todayDate,
-  getAmountWithVat,
+  // manipulateDate,
+  // todayDate,
+  // getAmountWithVat,
   uniqueItemsToArray,
   removeSpaces,
   makeObjectIds,
   makeAxiosRequest,
   bearerToken,
   isValidEmail,
-  isEmailDomainAllowed,
+  // isEmailDomainAllowed,
   removeSpecialCharacters,
   onlyNumbersString,
   baseUrlWithoutParams,
@@ -1341,10 +1321,10 @@ module.exports = {
   getBatchedIterable,
   firstCharacterCapitalOfEachWord,
   normalizeDate,
-  normalizeValue,
+  // normalizeValue,
   formatDateForUserUpdate,
   isValidDate,
-  formatValueForDisplay,
+  // formatValueForDisplay,
   getSapOriginalAmount,
   parseLeadsCSVFile,
   transformToISODate,

@@ -1,6 +1,7 @@
 module.exports = Object.freeze({
   exitUrl: [
   "/api/auth/me",
+  "/api/user/users"
   ],
   passUrl: [
     "/api/auth/login",
