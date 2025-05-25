@@ -19,6 +19,7 @@ const getAllUsers = async (req, res) => {
             totalUserCount: users.totalUserCount,
         });
     } catch (error) {
+        console.log(error);
         return res.status(500).json({
         status: false,
         message: error.message,
@@ -27,6 +28,32 @@ const getAllUsers = async (req, res) => {
     }
 
 
+ const getUserById = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const user = await userService.getUserById(userId);
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found",
+            });
+        }
+        return res.status(200).json({
+            status: true,
+            data: user?.data || [],
+            message: "User fetched successfully",
+        });
+    }catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            status: false,
+            message: error.message,
+        });
+    }
+ }   
+
+
 module.exports = {
     getAllUsers,
+    getUserById
 };

@@ -10,4 +10,10 @@ const router = express.Router();
 
 router.post("/users", authMiddleware, userController.getAllUsers);
 
+router.get(
+  "/users/:id",
+  authMiddleware,
+  userController.getUserById
+);
+
 module.exports = router;
